@@ -1,0 +1,54 @@
+# Plan morning-digest § 3/4: publish the digest preview to GitHub Pages (ADR 0003).
+# The page is built here from the repo and deployed as a Pages artifact: it is never committed.
+# marker=true  -> .env gets LANE_MARKER from the repo secret (review copy).
+# marker=false -> LANE_MARKER unset, banner reads "no marker set" (clean-up, same link).
+name: preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      marker:
+        description: Carry the lane marker
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-package-lock --no-fund --no-audit
+      - name: Write .env
+        env:
+          WITH_MARKER: ${{ inputs.marker }}
+          LANE_MARKER: ${{ secrets.LANE_MARKER }}
+        run: |
+          printf 'LANE_ID=lane-07\nPORT=8787\n' > .env
+          if [ "$WITH_MARKER" = "true" ]; then printf 'LANE_MARKER=%s\n' "$LANE_MARKER" >> .env; fi
+      - name: Save /digest/2026-10-28
+        run: npx tsx --env-file-if-exists=.env scripts/save-preview.ts /digest/2026-10-28 _site/index.html
+      - name: Check the banner
+        env:
+          WITH_MARKER: ${{ inputs.marker }}
+        run: |
+          if [ "$WITH_MARKER" = "true" ]; then ! grep -q 'no marker set' _site/index.html; else grep -q 'no marker set' _site/index.html; fi
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
