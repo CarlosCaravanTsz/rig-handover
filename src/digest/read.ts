@@ -41,6 +41,7 @@ export function digest(night: string, text: string): Night {
         owner: l.owner,
         runs: 1,
         retries: l.status === 'retry' ? 1 : 0,
+        fails: l.status === 'fail' ? 1 : 0,
         lastStatus: l.status,
         lastError: l.error ?? null,
         firstAt: l.at,
@@ -50,6 +51,7 @@ export function digest(night: string, text: string): Night {
     }
     r.runs++;
     if (l.status === 'retry') r.retries++;
+    if (l.status === 'fail') r.fails++;
     r.owner = l.owner;
     r.lastStatus = l.status;
     r.lastError = l.error ?? null;

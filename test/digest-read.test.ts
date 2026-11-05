@@ -43,3 +43,15 @@ describe('readNight', () => {
     expect(readNight(dir, '2026-11-02')).toEqual({ night: '2026-11-02', rows: [], badLines: 2 });
   });
 });
+
+describe('readNight fails', () => {
+  it('counts a fail even when a later run passed', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'rig-runs-'));
+    writeFileSync(
+      join(dir, '2026-11-03.jsonl'),
+      '{"at":"2026-11-03T01:00:00+01:00","job":"j","status":"fail","owner":"o","error":"boom"}\n' +
+        '{"at":"2026-11-03T02:00:00+01:00","job":"j","status":"ok","owner":"o"}\n',
+    );
+    expect(readNight(dir, '2026-11-03')!.rows[0]).toMatchObject({ fails: 1, lastStatus: 'ok', lastError: null });
+  });
+});

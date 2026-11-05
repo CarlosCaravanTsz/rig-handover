@@ -21,6 +21,7 @@ export function DigestPage({ night }: { night: Night }) {
               <th>owner</th>
               <th>runs</th>
               <th>retries</th>
+              <th>fails</th>
               <th>last status</th>
               <th>last error</th>
               <th>first</th>
@@ -29,7 +30,7 @@ export function DigestPage({ night }: { night: Night }) {
           </thead>
           <tbody>
             {night.rows.map((r) => {
-              const failed = r.lastStatus === 'fail';
+              const failed = r.fails > 0;
               const retried = r.retries >= 3;
               return (
                 <tr class={failed || retried ? 'warn' : undefined}>
@@ -37,7 +38,8 @@ export function DigestPage({ night }: { night: Night }) {
                   <td>{r.owner ?? dash}</td>
                   <td>{r.runs}</td>
                   <td>{retried ? `${r.retries} (many retries)` : r.retries}</td>
-                  <td>{failed ? 'fail (failed)' : r.lastStatus}</td>
+                  <td>{failed ? `${r.fails} (failed)` : r.fails}</td>
+                  <td>{r.lastStatus}</td>
                   <td>{r.lastError ?? dash}</td>
                   <td>{r.firstAt}</td>
                   <td>{r.lastAt}</td>
